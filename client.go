@@ -204,6 +204,16 @@ type Client interface {
 	// Get SB_Global table options
 	SBGlobalGetOptions() (map[string]string, error)
 
+	//Add a DataPathBinding
+	DataPathBindingAdd(tunnel_key int, external_ids map[string]string) (*OvnCommand, error)
+
+	// Delete DataPathBinding UUID
+	DataPathBindingDel(uuid string) (*OvnCommand, error)
+	// Get DataPathBinding by UUID
+	DataPathBindingGet(uuid string) ([]*DataPathBinding, error)
+	// List DataPathBindings
+	DataPathBindingList() ([]*DataPathBinding, error)
+
 	// Close connection to OVN
 	Close() error
 }
@@ -679,4 +689,24 @@ func (c *ovndb) sbGlobalAdd(options map[string]string) (*OvnCommand, error) {
 
 func (c *ovndb) sbGlobalDel() (*OvnCommand, error) {
 	return c.sbGlobalDelImp()
+}
+
+func (c *ovndb) DChassisGet(name string) ([]*Chassis, error) {
+	return c.chassisGetImp(name)
+}
+
+func (c *ovndb) DataPathBindingAdd(tunnel_key int, external_ids map[string]string) (*OvnCommand, error) {
+	return c.dpbAddImp(tunnel_key, external_ids)
+}
+
+func (c *ovndb) DataPathBindingDel(uuid string) (*OvnCommand, error) {
+	return c.dpbDelImp(uuid)
+}
+
+func (c *ovndb) DataPathBindingGet(uuid string) ([]*DataPathBinding, error) {
+	return c.dpbGetImp(uuid)
+}
+
+func (c *ovndb) DataPathBindingList() ([]*DataPathBinding, error) {
+	return c.dpbListImp()
 }

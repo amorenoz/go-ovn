@@ -52,6 +52,7 @@ const (
 	TableChassis                  string = "Chassis"
 	TableEncap                    string = "Encap"
 	TableSBGlobal                 string = "SB_Global"
+	TableDataPathBinding          string = "Datapath_Binding"
 )
 
 var NBTablesOrder = []string{
@@ -80,4 +81,5 @@ var SBTablesOrder = []string{
 	TableChassis,
 	TableEncap,
 	TableSBGlobal,
+	TableDataPathBinding,
 }
