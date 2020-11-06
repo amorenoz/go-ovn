@@ -723,3 +723,8 @@ func (c *ovndb) sbGlobalDel() (*OvnCommand, error) {
 func (c *ovndb) DChassisGet(name string) ([]*Chassis, error) {
 	return c.chassisGetImp(name)
 }
+
+//TODO: Should we need high level API?
+//func (c *ovndb) DataPathBindingAdd(...) {
+//func (c *ovndb) DataPathBindingDel(...) {}
+//...

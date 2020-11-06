@@ -83,6 +83,11 @@ type OVNSignal interface {
 	// Create/delete encap from south bound db
 	OnEncapCreate(ch *Encap)
 	OnEncapDelete(ch *Encap)
+
+	// Create/delete DataPathBinding from south bound db
+	//TODO
+	//OnDataPathBindingCreate(dp *DataPathBinding)
+	//OnDataPathBindingDelete(dp *DataPathBinding)
 }
 
 // OVNNotifier ovnnb and ovnsb notifier

@@ -1,0 +1,52 @@
+package goovn
+
+import (
+	"testing"
+	//"github.com/stretchr/testify/assert"
+)
+
+/*
+TODO:
+- Test invalid data
+- Test empty data
+- Test adding multiple elements on a transaction
+- Test deletion
+*/
+
+func TestDataPathBinding(t *testing.T) {
+	//var cmds []*OvnCommand
+	ovndbapi := getOVNClient(DBSB)
+
+	t.Logf("Adding DataPathBindings to OVN SB DB")
+	dp := DataPathBinding{
+		TunnelKey:   4,
+		ExternalIDs: map[string]string{"logical-switch": "d9b28e90-379b-4757-aa67-d95f4f7dda6c", "name": "join_ovn-worker2"},
+	}
+
+	cmd, err := ovndbapi.Add(&dp)
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = ovndbapi.Execute(cmd)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var datas []DataPathBinding
+	err = ovndbapi.List(&datas)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("DatapathBinding list %v", datas)
+
+	uuid := datas[0].UUID
+	t.Logf("DatapathBinding UUID %s", uuid)
+
+	data2 := DataPathBinding{}
+	err = ovndbapi.Get(&data2, uuid)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Logf("DatapathBinding retrieved %v", data2)
+
+}

@@ -274,6 +274,9 @@ func (odbi *ovndb) populateCache(updates libovsdb.TableUpdates) {
 					case TableEncap:
 						encap, _ := odbi.rowToEncap(uuid)
 						odbi.signalCB.OnEncapCreate(encap)
+						//case TableDataPathBinding:
+						//	dpb, _ := odbi.dpbGetImp(uuid)
+						//	odbi.srgnalCB.OnDataPathBindingCreate(dpb)
 					}
 				}
 			} else {
@@ -323,6 +326,9 @@ func (odbi *ovndb) populateCache(updates libovsdb.TableUpdates) {
 						case TableEncap:
 							encap, _ := odbi.rowToEncap(uuid)
 							odbi.signalCB.OnEncapDelete(encap)
+							//case TableDataPathBinding:
+							//	dpb, _ := odbi.dpbGetImp(uuid)
+							//	odbi.signalCB.OnDataPathBindingDelete(dpb)
 						}
 					}(table, uuid)
 				}
