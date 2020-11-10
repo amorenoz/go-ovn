@@ -53,6 +53,7 @@ const (
 	TableEncap                    string = "Encap"
 	TableSBGlobal                 string = "SB_Global"
 	TableDataPathBinding          string = "Datapath_Binding"
+	TableLogicalFlow              string = "Logical_Flow"
 )
 
 var NBTablesOrder = []string{
@@ -82,4 +83,5 @@ var SBTablesOrder = []string{
 	TableEncap,
 	TableSBGlobal,
 	TableDataPathBinding,
+	TableLogicalFlow,
 }

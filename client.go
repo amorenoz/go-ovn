@@ -206,13 +206,21 @@ type Client interface {
 
 	//Add a DataPathBinding
 	DataPathBindingAdd(tunnel_key int, external_ids map[string]string) (*OvnCommand, error)
-
 	// Delete DataPathBinding UUID
 	DataPathBindingDel(uuid string) (*OvnCommand, error)
 	// Get DataPathBinding by UUID
 	DataPathBindingGet(uuid string) (*DataPathBinding, error)
 	// List DataPathBindings
 	DataPathBindingList() ([]*DataPathBinding, error)
+
+	//Add a DataPathBinding
+	LogicalFlowAdd(action string, match string, pipeline string, logical_datapath []string, priority int, table_id int, external_ids map[string]string) (*OvnCommand, error)
+	// Delete LogicalFlow UUID
+	LogicalFlowDel(uuid string) (*OvnCommand, error)
+	// Get LogicalFlow by UUID
+	LogicalFlowGet(uuid string) (*LogicalFlow, error)
+	// List LogicalFlows
+	LogicalFlowList() ([]*LogicalFlow, error)
 
 	// Close connection to OVN
 	Close() error
@@ -709,4 +717,20 @@ func (c *ovndb) DataPathBindingGet(uuid string) (*DataPathBinding, error) {
 
 func (c *ovndb) DataPathBindingList() ([]*DataPathBinding, error) {
 	return c.dpbListImp()
+}
+
+func (c *ovndb) LogicalFlowAdd(action string, match string, pipeline string, logical_datapath []string, priority int, table_id int, external_ids map[string]string) (*OvnCommand, error) {
+	return c.lfAddImp(action, match, pipeline, logical_datapath, priority, table_id, external_ids)
+}
+
+func (c *ovndb) LogicalFlowDel(uuid string) (*OvnCommand, error) {
+	return c.lfDelImp(uuid)
+}
+
+func (c *ovndb) LogicalFlowGet(uuid string) (*LogicalFlow, error) {
+	return c.lfGetImp(uuid)
+}
+
+func (c *ovndb) LogicalFlowList() ([]*LogicalFlow, error) {
+	return c.lfListImp()
 }

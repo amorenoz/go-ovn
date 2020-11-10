@@ -87,6 +87,10 @@ type OVNSignal interface {
 	// Create/delete DataPathBinding from south bound db
 	onDataPathBindingCreate(dp *DataPathBinding)
 	onDataPathBindingDelete(dp *DataPathBinding)
+
+	// Create/delete LogicalFlow from south bound db
+	onLogicalFlowCreate(lf *LogicalFlow)
+	onLogicalFlowDelete(lf *LogicalFlow)
 }
 
 // OVNNotifier ovnnb and ovnsb notifier

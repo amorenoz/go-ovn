@@ -275,6 +275,9 @@ func (odbi *ovndb) populateCache(updates libovsdb.TableUpdates) {
 					case TableDataPathBinding:
 						dpb, _ := odbi.dpbGetImp(uuid)
 						odbi.signalCB.onDataPathBindingCreate(dpb)
+					case TableLogicalFlow:
+						lf, _ := odbi.lfGetImp(uuid)
+						odbi.signalCB.onLogicalFlowCreate(lf)
 					}
 				}
 			} else {
@@ -327,6 +330,9 @@ func (odbi *ovndb) populateCache(updates libovsdb.TableUpdates) {
 						case TableDataPathBinding:
 							dpb, _ := odbi.dpbGetImp(uuid)
 							odbi.signalCB.onDataPathBindingDelete(dpb)
+						case TableLogicalFlow:
+							lf, _ := odbi.lfGetImp(uuid)
+							odbi.signalCB.onLogicalFlowDelete(lf)
 						}
 					}(table, uuid)
 				}
