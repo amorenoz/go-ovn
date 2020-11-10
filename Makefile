@@ -1,12 +1,14 @@
-.PHONY: clean build-image
+.PHONY: clean check_prep check
 
-#   clean: clean up all build artifacts.
-#   build-image: build docker image for selected projects.
+DOCKER ?= $(shell which docker)
+IMAGE_NAME="goovn:test"
 
-# Remove all build artifacts.
-#
-# Example:
-#   make clean
 clean:
-	build/clean.sh
+	@docker rmi -f $(IMAGE_NAME)
 
+check_prep:
+	@$(DOCKER) inspect $(IMAGE_NAME) 2>&1 >/dev/null || \
+	    $(DOCKER) build -t $(IMAGE_NAME) . ;
+
+check: check_prep
+	$(DOCKER) run -e "SRCDIR=/src" -v $$PWD:/root/workspace -w /root/workspace -it $(IMAGE_NAME) .travis/test_run.sh
