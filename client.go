@@ -215,6 +215,14 @@ type Client interface {
 	// Get PortGroup data structure if it exists
 	PortGroupGet(group string) (*PortGroup, error)
 
+	// POC GENERIC CRUD API
+	/*Accepts a pointer to a OVSDBObj struct */
+	Get(obj interface{}, uuid string) error
+	/*Accepts a pointer to a OVSDBObj struct */
+	Add(obj interface{}) (*OvnCommand, error)
+	/*Accepts a pointer to a slice of OVSDBObj*/
+	List(obj interface{}) error
+
 	// Close connection to OVN
 	Close() error
 }
@@ -710,4 +718,8 @@ func (c *ovndb) sbGlobalAdd(options map[string]string) (*OvnCommand, error) {
 
 func (c *ovndb) sbGlobalDel() (*OvnCommand, error) {
 	return c.sbGlobalDelImp()
+}
+
+func (c *ovndb) DChassisGet(name string) ([]*Chassis, error) {
+	return c.chassisGetImp(name)
 }
