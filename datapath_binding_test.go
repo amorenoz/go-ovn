@@ -8,7 +8,7 @@ import (
 
 var dataPathBindings = map[int](map[string]string){
 	1:  {"key1": "val1", "key2": "val2"},
-	2:  nil,
+	2:  {"key": "val"},
 	20: {"logical-switch": "d9b28e90-379b-4757-aa67-d95f4f7dda6c", "name": "join_ovn-worker2"},
 	42: {"the": "answer", "to": "life", ",the": "universe", "and": "everything"},
 }
@@ -45,10 +45,8 @@ func TestDataPathBinding(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		assert.Equal(t, 1, len(gdpb), "Get DataPathBinding returns one element")
-
-		assert.Equal(t, gdpb[0].ExternalID, dpb.ExternalID, "Get DataPathBinding retuns correct element")
-		assert.Equal(t, gdpb[0].TunnelKey, dpb.TunnelKey, "Get DataPathBinding retuns correct element")
+		assert.Equal(t, gdpb.ExternalID, dpb.ExternalID, "Get DataPathBinding retuns correct element")
+		assert.Equal(t, gdpb.TunnelKey, dpb.TunnelKey, "Get DataPathBinding retuns correct element")
 	}
 
 	cmds = make([]*OvnCommand, 0, 2)

@@ -16,12 +16,6 @@
 
 package goovn
 
-import (
-	"fmt"
-
-	"github.com/ebay/libovsdb"
-)
-
 // DataPathBinding ovnsb item
 type DataPathBinding struct {
 	UUID       string
@@ -29,109 +23,65 @@ type DataPathBinding struct {
 	ExternalID map[interface{}]interface{}
 }
 
+// DataPathBindingTable
+var (
+	DPBTable = OVSDBTable{
+		TableName: TableDataPathBinding,
+		Fields: map[string]OVSFieldType{
+			"tunnel_key":   OVSTypeInt,
+			"external_ids": OVSTypeMap,
+		},
+		Indexes: nil,
+	}
+)
+
 func (odbi *ovndb) dpbAddImp(tunnel_key int, external_ids map[string]string) (*OvnCommand, error) {
-	var operations []libovsdb.Operation
-
-	namedUUID, err := newRowUUID()
-	if err != nil {
-		return nil, err
+	obj := OVSDBObj{
+		Table: &DPBTable,
+		Values: map[string]interface{}{
+			"tunnel_key":   tunnel_key,
+			"external_ids": external_ids,
+		},
 	}
-
-	dpbRow := make(OVNRow)
-	dpbRow["tunnel_key"] = tunnel_key
-
-	if external_ids != nil {
-		oMap, err := libovsdb.NewOvsMap(external_ids)
-		if err != nil {
-			return nil, err
-		}
-		dpbRow["external_ids"] = oMap
-	}
-
-	insertDataPathBindingOp := libovsdb.Operation{
-		Op:       opInsert,
-		Table:    TableDataPathBinding,
-		Row:      dpbRow,
-		UUIDName: namedUUID,
-	}
-
-	operations = append(operations, insertDataPathBindingOp)
-	return &OvnCommand{operations, odbi, make([][]map[string]interface{}, len(operations))}, nil
+	return odbi.AddObj(&obj)
 }
 
 // Delete DataPathBinding by UUID
 func (odbi *ovndb) dpbDelImp(dpb string) (*OvnCommand, error) {
-	var operations []libovsdb.Operation
-
-	condition := libovsdb.NewCondition("_uuid", "==", stringToGoUUID(dpb))
-	deleteOp := libovsdb.Operation{
-		Op:    opDelete,
-		Table: TableDataPathBinding,
-		Where: []interface{}{condition},
+	obj := OVSDBObj{
+		Table: &DPBTable,
+		UUID:  dpb,
 	}
-	operations = append(operations, deleteOp)
-	return &OvnCommand{operations, odbi, make([][]map[string]interface{}, len(operations))}, nil
+	return odbi.DelObj(&obj)
 }
 
-// Get DataPathBinding by tunnel_key
-func (odbi *ovndb) dpbGetImp(dpb string) ([]*DataPathBinding, error) {
-	var dpbList []*DataPathBinding
-	odbi.cachemutex.RLock()
-	defer odbi.cachemutex.RUnlock()
-
-	cacheDataPathBinding, ok := odbi.cache[TableDataPathBinding]
-	if !ok {
-		return nil, ErrorNotFound
+// Get DataPathBinding by UUID
+func (odbi *ovndb) dpbGetImp(dpb string) (*DataPathBinding, error) {
+	obj, err := odbi.GetObjByUUID(&DPBTable, dpb)
+	if err != nil {
+		return nil, err
 	}
-
-	for uuid, _ := range cacheDataPathBinding {
-		if uuid == dpb {
-			dpb, err := odbi.rowToDataPathBinding(uuid)
-			if err != nil {
-				return nil, err
-			}
-			dpbList = append(dpbList, dpb)
-		}
-	}
-
-	if len(dpbList) == 0 {
-		return nil, ErrorNotFound
-	}
-	return dpbList, nil
-}
-
-func (odbi *ovndb) rowToDataPathBinding(uuid string) (*DataPathBinding, error) {
-	cacheDPB, ok := odbi.cache[TableDataPathBinding][uuid]
-	if !ok {
-		return nil, fmt.Errorf("DataPathBinding with uuid%s not found", uuid)
-	}
-
-	dpb := &DataPathBinding{
-		UUID:       uuid,
-		TunnelKey:  cacheDPB.Fields["tunnel_key"].(int),
-		ExternalID: cacheDPB.Fields["external_ids"].(libovsdb.OvsMap).GoMap,
-	}
-
-	return dpb, nil
+	return &DataPathBinding{
+		UUID:       obj.UUID,
+		TunnelKey:  obj.Values["tunnel_key"].(int),
+		ExternalID: obj.Values["external_ids"].(map[interface{}]interface{}),
+	}, nil
 }
 
 func (odbi *ovndb) dpbListImp() ([]*DataPathBinding, error) {
-	odbi.cachemutex.RLock()
-	defer odbi.cachemutex.RUnlock()
-
-	cacheDPB, ok := odbi.cache[TableDataPathBinding]
-	if !ok {
-		return nil, ErrorSchema
+	var dpbList []*DataPathBinding
+	objList, err := odbi.ListTable(&DPBTable)
+	if err != nil {
+		return nil, err
 	}
+	for _, obj := range objList {
+		dpbList = append(dpbList,
+			&DataPathBinding{
+				UUID:       obj.UUID,
+				TunnelKey:  obj.Values["tunnel_key"].(int),
+				ExternalID: obj.Values["external_ids"].(map[interface{}]interface{}),
+			})
 
-	listDPB := make([]*DataPathBinding, 0, len(cacheDPB))
-
-	for uuid := range cacheDPB {
-		dpb, err := odbi.rowToDataPathBinding(uuid)
-		if err != nil {
-			return nil, err
-		}
-		listDPB = append(listDPB, dpb)
 	}
-	return listDPB, nil
+	return dpbList, nil
 }

@@ -210,7 +210,7 @@ type Client interface {
 	// Delete DataPathBinding UUID
 	DataPathBindingDel(uuid string) (*OvnCommand, error)
 	// Get DataPathBinding by UUID
-	DataPathBindingGet(uuid string) ([]*DataPathBinding, error)
+	DataPathBindingGet(uuid string) (*DataPathBinding, error)
 	// List DataPathBindings
 	DataPathBindingList() ([]*DataPathBinding, error)
 
@@ -703,7 +703,7 @@ func (c *ovndb) DataPathBindingDel(uuid string) (*OvnCommand, error) {
 	return c.dpbDelImp(uuid)
 }
 
-func (c *ovndb) DataPathBindingGet(uuid string) ([]*DataPathBinding, error) {
+func (c *ovndb) DataPathBindingGet(uuid string) (*DataPathBinding, error) {
 	return c.dpbGetImp(uuid)
 }
 
