@@ -70,27 +70,27 @@ type OVNSignal interface {
 	OnLoadBalancerCreate(ls *LoadBalancer)
 	OnLoadBalancerDelete(ls *LoadBalancer)
 
-	onMeterCreate(meter *Meter)
-	onMeterDelete(meter *Meter)
+	OnMeterCreate(meter *Meter)
+	OnMeterDelete(meter *Meter)
 
-	onMeterBandCreate(band *MeterBand)
-	onMeterBandDelete(band *MeterBand)
+	OnMeterBandCreate(band *MeterBand)
+	OnMeterBandDelete(band *MeterBand)
 
 	// Create/delete chassis from south bound db
-	onChassisCreate(ch *Chassis)
-	onChassisDelete(ch *Chassis)
+	OnChassisCreate(ch *Chassis)
+	OnChassisDelete(ch *Chassis)
 
 	// Create/delete encap from south bound db
-	onEncapCreate(ch *Encap)
-	onEncapDelete(ch *Encap)
+	OnEncapCreate(ch *Encap)
+	OnEncapDelete(ch *Encap)
 
 	// Create/delete DataPathBinding from south bound db
-	onDataPathBindingCreate(dp *DataPathBinding)
-	onDataPathBindingDelete(dp *DataPathBinding)
+	OnDataPathBindingCreate(dp *DataPathBinding)
+	OnDataPathBindingDelete(dp *DataPathBinding)
 
 	// Create/delete LogicalFlow from south bound db
-	onLogicalFlowCreate(lf *LogicalFlow)
-	onLogicalFlowDelete(lf *LogicalFlow)
+	OnLogicalFlowCreate(lf *LogicalFlow)
+	OnLogicalFlowDelete(lf *LogicalFlow)
 }
 
 // OVNNotifier ovnnb and ovnsb notifier
