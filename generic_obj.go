@@ -3,6 +3,8 @@ package goovn
 import (
 	"fmt"
 
+	"reflect"
+
 	"github.com/ebay/libovsdb"
 )
 
@@ -13,6 +15,7 @@ const (
 	OVSTypeString OVSFieldType = "String"
 	OVSTypeMap    OVSFieldType = "Map"
 	OVSTypeSet    OVSFieldType = "Set"
+	OVSTypeRef    OVSFieldType = "Ref" // Accepts a list of uuid strings
 )
 
 type OVSDBKey struct {
@@ -61,7 +64,7 @@ func (odbi *ovndb) row2Obj(table *OVSDBTable, uuid string) (*OVSDBObj, error) {
 			case string:
 				values[fieldName] = rowVal.(string)
 			default:
-				return nil, fmt.Errorf("Type error in field %s, expected int, got %v", fieldName, rowVal)
+				return nil, fmt.Errorf("Type error in field %s, expected string, got %v", fieldName, rowVal)
 			}
 
 		case OVSTypeMap:
@@ -71,13 +74,23 @@ func (odbi *ovndb) row2Obj(table *OVSDBTable, uuid string) (*OVSDBObj, error) {
 			switch rowVal.(type) {
 			case string:
 				values[fieldName] = []string{rowVal.(string)}
+			case []string:
+				values[fieldName] = rowVal
 			case libovsdb.OvsSet:
 				values[fieldName] = odbi.ConvertGoSetToStringArray(rowVal.(libovsdb.OvsSet))
 			default:
-				return nil, fmt.Errorf("Type error in field %s, expected int, got %v", fieldName, rowVal)
+				return nil, fmt.Errorf("Type error in field %s, expected Set, got %v (%s) ", fieldName, rowVal, reflect.TypeOf(rowVal).String())
+			}
+		case OVSTypeRef:
+			switch rowVal.(type) {
+			case libovsdb.UUID:
+				values[fieldName] = []string{rowVal.(libovsdb.UUID).GoUUID}
+			case libovsdb.OvsSet:
+				values[fieldName] = odbi.ConvertGoSetToStringArray(rowVal.(libovsdb.OvsSet))
+			default:
+				return nil, fmt.Errorf("Type error in field %s, expected Ref, got %v (%s) ", fieldName, rowVal, reflect.TypeOf(rowVal).String())
 			}
 		}
-
 	}
 
 	return &OVSDBObj{
@@ -182,6 +195,18 @@ func (odbi *ovndb) AddObj(obj *OVSDBObj) (*OvnCommand, error) {
 		case OVSTypeSet:
 			if value := obj.Values[fieldName]; value != nil {
 				oSet, err := libovsdb.NewOvsSet(value)
+				if err != nil {
+					return nil, err
+				}
+				objRow[fieldName] = oSet
+			}
+		case OVSTypeRef:
+			if value := obj.Values[fieldName]; value != nil {
+				valueUUIDs := make([]libovsdb.UUID, 0)
+				for _, val := range value.([]string) {
+					valueUUIDs = append(valueUUIDs, stringToGoUUID(val))
+				}
+				oSet, err := libovsdb.NewOvsSet(valueUUIDs)
 				if err != nil {
 					return nil, err
 				}
