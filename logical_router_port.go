@@ -131,9 +131,14 @@ func (odbi *ovndb) lrpDelImp(lr, lrp string) (*OvnCommand, error) {
 }
 
 func (odbi *ovndb) rowToLogicalRouterPort(uuid string) *LogicalRouterPort {
+	name, ok := odbi.cache[TableLogicalRouterPort][uuid].Fields["name"].(string)
+	if !ok {
+		panic(fmt.Sprintf("The row %v with fields %v has a name that is not a string", odbi.cache[TableLogicalRouterPort][uuid], odbi.cache[TableLogicalRouterPort][uuid].Fields))
+	}
+
 	lrp := &LogicalRouterPort{
 		UUID:       uuid,
-		Name:       odbi.cache[TableLogicalRouterPort][uuid].Fields["name"].(string),
+		Name:       name,
 		MAC:        odbi.cache[TableLogicalRouterPort][uuid].Fields["mac"].(string),
 		ExternalID: odbi.cache[TableLogicalRouterPort][uuid].Fields["external_ids"].(libovsdb.OvsMap).GoMap,
 	}
