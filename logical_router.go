@@ -157,7 +157,11 @@ func (odbi *ovndb) rowToLogicalRouter(uuid string) *LogicalRouter {
 				for _, p := range ps.GoSet {
 					if vp, ok := p.(libovsdb.UUID); ok {
 						tp := odbi.rowToLogicalRouterPort(vp.GoUUID)
-						lps = append(lps, tp.Name)
+						if tp != nil {
+							lps = append(lps, tp.Name)
+						} else {
+							panic(fmt.Sprintf("Processing LR but LRP is not preset. Cache: %v, uuid %s", odbi.cache[TableLogicalRouterPort], vp.GoUUID))
+						}
 					}
 				}
 			}

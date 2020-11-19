@@ -131,29 +131,34 @@ func (odbi *ovndb) lrpDelImp(lr, lrp string) (*OvnCommand, error) {
 }
 
 func (odbi *ovndb) rowToLogicalRouterPort(uuid string) *LogicalRouterPort {
-	lrp := &LogicalRouterPort{
-		UUID:       uuid,
-		Name:       odbi.cache[TableLogicalRouterPort][uuid].Fields["name"].(string),
-		MAC:        odbi.cache[TableLogicalRouterPort][uuid].Fields["mac"].(string),
-		ExternalID: odbi.cache[TableLogicalRouterPort][uuid].Fields["external_ids"].(libovsdb.OvsMap).GoMap,
+	cacheRouterPort, ok := odbi.cache[TableLogicalRouterPort][uuid]
+	if !ok {
+		return nil
 	}
 
-	if peer, ok := odbi.cache[TableLogicalRouterPort][uuid].Fields["peer"]; ok {
+	lrp := &LogicalRouterPort{
+		UUID:       uuid,
+		Name:       cacheRouterPort.Fields["name"].(string),
+		MAC:        cacheRouterPort.Fields["mac"].(string),
+		ExternalID: cacheRouterPort.Fields["external_ids"].(libovsdb.OvsMap).GoMap,
+	}
+
+	if peer, ok := cacheRouterPort.Fields["peer"]; ok {
 		switch peer.(type) {
 		case string:
 			lrp.Peer = peer.(string)
 		}
 	}
 
-	if options, ok := odbi.cache[TableLogicalRouterPort][uuid].Fields["options"]; ok {
+	if options, ok := cacheRouterPort.Fields["options"]; ok {
 		lrp.Options = options.(libovsdb.OvsMap).GoMap
 	}
 
-	if ipv6_ra_configs, ok := odbi.cache[TableLogicalRouterPort][uuid].Fields["ipv6_ra_configs"]; ok {
+	if ipv6_ra_configs, ok := cacheRouterPort.Fields["ipv6_ra_configs"]; ok {
 		lrp.IPv6RAConfigs = ipv6_ra_configs.(libovsdb.OvsMap).GoMap
 	}
 
-	if enabled, ok := odbi.cache[TableLogicalRouterPort][uuid].Fields["enabled"]; ok {
+	if enabled, ok := cacheRouterPort.Fields["enabled"]; ok {
 		switch enabled.(type) {
 		case bool:
 			lrp.Enabled = enabled.(bool)
@@ -164,14 +169,14 @@ func (odbi *ovndb) rowToLogicalRouterPort(uuid string) *LogicalRouterPort {
 		}
 	}
 
-	gateway_chassis := odbi.cache[TableLogicalRouterPort][uuid].Fields["gateway_chassis"]
+	gateway_chassis := cacheRouterPort.Fields["gateway_chassis"]
 	switch gateway_chassis.(type) {
 	case string:
 		lrp.GatewayChassis = []string{gateway_chassis.(string)}
 	case libovsdb.OvsSet:
 		lrp.GatewayChassis = odbi.ConvertGoSetToStringArray(gateway_chassis.(libovsdb.OvsSet))
 	}
-	networks := odbi.cache[TableLogicalRouterPort][uuid].Fields["networks"]
+	networks := cacheRouterPort.Fields["networks"]
 	switch networks.(type) {
 	case string:
 		lrp.Networks = []string{networks.(string)}
