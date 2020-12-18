@@ -56,6 +56,10 @@ const (
 	TableLogicalFlow              string = "Logical_Flow"
 )
 
+/* Ordered NorthBound Tables
+The cache will be populated following this order.
+Care must be taken too keep reference targets before their sources.
+*/
 var NBTablesOrder = []string{
 	TableNBGlobal,
 	TableAddressSet,
@@ -78,6 +82,10 @@ var NBTablesOrder = []string{
 	TableLogicalRouter,
 }
 
+/* Ordered SouthBound Tables
+The cache will be populated following this order.
+Care must be taken too keep reference targets before their sources.
+*/
 var SBTablesOrder = []string{
 	TableChassis,
 	TableEncap,
