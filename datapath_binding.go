@@ -29,12 +29,48 @@ var (
 )
 
 // DataPathBinding ovnsb item
-type DataPathBinding struct {
+type DatapathBinding struct {
 	UUID        string            `ovn:",uuid"`
 	TunnelKey   int               `ovn:"tunnel_key"`
 	ExternalIDs map[string]string `ovn:"external_ids"`
 }
 
-func (DataPathBinding) GetTable() string {
+func (DatapathBinding) GetTable() string {
 	return DPBTable
+}
+
+type DatapathBindingApi struct {
+	client Client
+}
+
+func (a DatapathBindingApi) Get(uuid string) (*DatapathBinding, error) {
+	var obj DatapathBinding
+	if err := a.client.Get(&obj, uuid); err != nil {
+		return nil, err
+	}
+	return &obj, nil
+}
+
+func (a DatapathBindingApi) List() (*[]DatapathBinding, error) {
+	var obj []DatapathBinding
+	if err := a.client.List(&obj); err != nil {
+		return nil, err
+	}
+	return &obj, nil
+}
+
+func (a DatapathBindingApi) Add(obj *DatapathBinding) (*OvnCommand, error) {
+	return a.client.Add(obj)
+}
+
+type SBApi struct {
+	DatapathBinding DatapathBindingApi
+}
+
+func NewSBApi(c Client) SBApi {
+	return SBApi{
+		DatapathBinding: DatapathBindingApi{
+			client: c,
+		},
+	}
 }
