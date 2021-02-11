@@ -28,8 +28,9 @@ import (
 )
 
 type EntityType string
-const(
-	PORT_GROUP EntityType = "PORT_GROUP"
+
+const (
+	PORT_GROUP     EntityType = "PORT_GROUP"
 	LOGICAL_SWITCH EntityType = "LOICAL_SWITCH"
 )
 
@@ -301,6 +302,10 @@ func NewClient(cfg *Config) (Client, error) {
 		return nil, err
 	}
 	return ovndb, err
+}
+
+func (c *ovndb) Api() libovsdb.NativeAPI {
+	return c.client.Apis[c.db]
 }
 
 func (c *ovndb) reconnect() {
