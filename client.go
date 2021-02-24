@@ -243,16 +243,46 @@ type Client interface {
 	Close() error
 }
 
+// TODO: Generic Model-based API
+//type ModelAPI interface {
+//	Create(Model) (*libovsdb.Operation, error)
+//	Delete(Model) (*libovsdb.Operation, error)
+//	Update(Model) ([]*libovsdb.Operation, error)
+//	List() ([]Model, error)
+//	Get(string) (Model, error)
+//	GetByIndex(string, interface{}) (Model, error)
+//}
+// ORMClient is the ORM client interface
+type ORMClient interface {
+	// TODO: Generic Model API
+	//Model(string) ModelAPI
+
+	// Close connection to OVN
+	Close() error
+}
+
 var _ Client = &ovndb{}
 
+type ClientMode int
+
+const Normal ClientMode = 0
+const ORM ClientMode = 1
+
+type ORMTableCache map[string]interface{}
+type ORMDBCache map[TableName]ORMTableCache
+
 type ovndb struct {
+	mode         ClientMode
 	client       *libovsdb.OvsdbClient
 	cache        map[string]map[string]libovsdb.Row
+	ormCache     ORMDBCache
 	cachemutex   sync.RWMutex
 	tranmutex    sync.Mutex
 	signalCB     OVNSignal
+	ormSignalCB  OVNORMSignal
 	disconnectCB OVNDisconnectedCallback
 	db           string
+	dbModel      DBModel
 	addr         string
 	tableCols    map[string][]string
 	tlsConfig    *tls.Config
@@ -281,6 +311,35 @@ func connect(c *ovndb) (err error) {
 	return nil
 }
 
+func NewORMClient(cfg *Config) (ORMClient, error) {
+	db := cfg.Db
+	// db string should strictly be OVN_Northbound or OVN_Southbound
+	switch db {
+	case DBNB, DBSB:
+		break
+	case "":
+		db = DBNB
+	default:
+		return nil, fmt.Errorf("Valid db names are: %s and %s", DBNB, DBSB)
+	}
+	ovndb := &ovndb{
+		mode:         ORM,
+		ormCache:     make(ORMDBCache),
+		ormSignalCB:  cfg.ORMSignalCB,
+		disconnectCB: cfg.DisconnectCB,
+		addr:         cfg.Addr,
+		tlsConfig:    cfg.TLSConfig,
+		reconn:       cfg.Reconnect,
+		dbModel:      cfg.DBModel,
+		db:           cfg.Db,
+	}
+	err := connect(ovndb)
+	if err != nil {
+		return nil, err
+	}
+	return ovndb, err
+}
+
 func NewClient(cfg *Config) (Client, error) {
 	db := cfg.Db
 	// db string should strictly be OVN_Northbound or OVN_Southbound
@@ -294,6 +353,7 @@ func NewClient(cfg *Config) (Client, error) {
 	}
 
 	ovndb := &ovndb{
+		mode:         Normal,
 		cache:        make(map[string]map[string]libovsdb.Row),
 		signalCB:     cfg.SignalCB,
 		disconnectCB: cfg.DisconnectCB,
@@ -336,6 +396,13 @@ func (c *ovndb) reconnect() {
 }
 
 func (c *ovndb) MonitorTables(jsonContext interface{}) (*libovsdb.TableUpdates, error) {
+	if c.mode == ORM {
+		return c.MonitorTablesORM(jsonContext)
+	}
+	return c.MonitorTablesNormal(jsonContext)
+}
+
+func (c *ovndb) MonitorTablesNormal(jsonContext interface{}) (*libovsdb.TableUpdates, error) {
 	// get the table list based on the DB
 	var tables []string
 	if c.db == DBNB {
@@ -373,6 +440,38 @@ func (c *ovndb) MonitorTables(jsonContext interface{}) (*libovsdb.TableUpdates, 
 	for table, columns := range c.tableCols {
 		requests[table] = libovsdb.MonitorRequest{
 			Columns: columns,
+			Select: libovsdb.MonitorSelect{
+				Initial: true,
+				Insert:  true,
+				Delete:  true,
+				Modify:  true,
+			}}
+	}
+	return c.client.Monitor(c.db, jsonContext, requests)
+}
+
+func (c *ovndb) MonitorTablesORM(jsonContext interface{}) (*libovsdb.TableUpdates, error) {
+	schema, err := c.client.GetSchema(c.db)
+	if err != nil {
+		return nil, err
+	}
+
+	supportedTables := make(map[TableName]bool, len(schema.Tables))
+	for stable := range schema.Tables {
+		supportedTables[TableName(stable)] = true
+	}
+
+	for table := range c.dbModel {
+		if !supportedTables[table] {
+			return nil, fmt.Errorf("specified table %q in database %q not supported by the schema",
+				table, c.db)
+		}
+	}
+
+	requests := make(map[string]libovsdb.MonitorRequest)
+	for tableName, _ := range c.dbModel {
+		requests[string(tableName)] = libovsdb.MonitorRequest{
+			Columns: []string{}, // All colummns
 			Select: libovsdb.MonitorSelect{
 				Initial: true,
 				Insert:  true,
