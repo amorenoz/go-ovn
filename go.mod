@@ -9,4 +9,4 @@ require (
 	github.com/stretchr/testify v1.4.0
 )
 
-replace github.com/ebay/libovsdb => github.com/amorenoz/libovsdb v0.0.0-20210225140357-16362c6dbfba
+replace github.com/ebay/libovsdb => github.com/amorenoz/libovsdb v0.0.0-20210305093614-80f588f3e2db
