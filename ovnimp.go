@@ -220,7 +220,7 @@ func (odbi *ovndb) populateCache(updates libovsdb.TableUpdates) {
 func (odbi *ovndb) populateCacheORM(updates libovsdb.TableUpdates) {
 	odbi.cachemutex.Lock()
 	defer odbi.cachemutex.Unlock()
-	for table, modelgen := range odbi.dbModel {
+	for table, _ := range odbi.dbModel.types {
 		tableUpdate, ok := updates.Updates[string(table)]
 		if !ok {
 			continue
@@ -234,9 +234,13 @@ func (odbi *ovndb) populateCacheORM(updates libovsdb.TableUpdates) {
 			// missing json number conversion in libovsdb
 			odbi.float64_to_int(row.New)
 			if !reflect.DeepEqual(row.New, emptyRow) {
-				model := modelgen(uuid)
+				model, err := odbi.dbModel.NewModel(table)
+				if err != nil {
+					// TODO: Propagate errors back to main thread
+					log.Printf("Error creating Model from table %s %s\n", string(table), err.Error())
+				}
 				api := odbi.client.ORM(odbi.db)
-				err := api.GetRowData(string(table), &row.New, model)
+				err = api.GetRowData(string(table), &row.New, model)
 				if err != nil {
 					// TODO: Propagate errors back to main thread
 					log.Printf("Error getting row data %s\n", err.Error())
@@ -244,6 +248,8 @@ func (odbi *ovndb) populateCacheORM(updates libovsdb.TableUpdates) {
 				if reflect.DeepEqual(model, odbi.ormCache[table][uuid]) {
 					continue
 				}
+				odbi.setUUID(model, uuid)
+
 				odbi.ormCache[table][uuid] = model
 				if odbi.ormSignalCB != nil {
 					odbi.ormSignalCB.OnCreated(model)

@@ -15,10 +15,10 @@ const (
 )
 
 var (
-	orm          goovn.ORMClient
-	exampleModel = goovn.DBModel{
-		"Logical_Router": NewRouter,
-	}
+	orm             goovn.ORMClient
+	exampleModel, _ = goovn.NewDBModel([]goovn.Model{
+		&LogicalRouter{},
+	})
 )
 
 type ormSignal struct{}

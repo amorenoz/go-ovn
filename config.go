@@ -31,5 +31,5 @@ type Config struct {
 	TableCols    map[string][]string     // List of tables and their cols to be monitored
 	// Specific to ORM mode
 	ORMSignalCB OVNORMSignal
-	DBModel     DBModel
+	DBModel     *DBModel
 }

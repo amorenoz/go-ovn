@@ -243,19 +243,9 @@ type Client interface {
 	Close() error
 }
 
-// TODO: Generic Model-based API
-//type ModelAPI interface {
-//	Create(Model) (*libovsdb.Operation, error)
-//	Delete(Model) (*libovsdb.Operation, error)
-//	Update(Model) ([]*libovsdb.Operation, error)
-//	List() ([]Model, error)
-//	Get(string) (Model, error)
-//	GetByIndex(string, interface{}) (Model, error)
-//}
 // ORMClient is the ORM client interface
 type ORMClient interface {
 	// TODO: Generic Model API
-	//Model(string) ModelAPI
 
 	// Close connection to OVN
 	Close() error
@@ -282,7 +272,7 @@ type ovndb struct {
 	ormSignalCB  OVNORMSignal
 	disconnectCB OVNDisconnectedCallback
 	db           string
-	dbModel      DBModel
+	dbModel      *DBModel
 	addr         string
 	tableCols    map[string][]string
 	tlsConfig    *tls.Config
@@ -461,7 +451,7 @@ func (c *ovndb) MonitorTablesORM(jsonContext interface{}) (*libovsdb.TableUpdate
 		supportedTables[TableName(stable)] = true
 	}
 
-	for table := range c.dbModel {
+	for table := range c.dbModel.types {
 		if !supportedTables[table] {
 			return nil, fmt.Errorf("specified table %q in database %q not supported by the schema",
 				table, c.db)
@@ -469,7 +459,7 @@ func (c *ovndb) MonitorTablesORM(jsonContext interface{}) (*libovsdb.TableUpdate
 	}
 
 	requests := make(map[string]libovsdb.MonitorRequest)
-	for tableName, _ := range c.dbModel {
+	for tableName, _ := range c.dbModel.types {
 		requests[string(tableName)] = libovsdb.MonitorRequest{
 			Columns: []string{}, // All colummns
 			Select: libovsdb.MonitorSelect{
