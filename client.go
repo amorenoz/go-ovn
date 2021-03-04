@@ -245,7 +245,15 @@ type Client interface {
 
 // ORMClient is the ORM client interface
 type ORMClient interface {
-	// TODO: Generic Model API
+	GetByID(interface{}, string) error
+	Get(Model, ...string) error
+	List(interface{}) error
+	Create(Model) (*OvnCommand, error)
+	Delete(model Model, index ...string) (*OvnCommand, error)
+	Update(model Model, index ...string) (*OvnCommand, error)
+	UpdateFields(Model, []string, ...string) (*OvnCommand, error)
+
+	Execute(cmds ...*OvnCommand) error
 
 	// Close connection to OVN
 	Close() error
