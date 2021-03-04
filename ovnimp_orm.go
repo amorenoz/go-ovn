@@ -3,6 +3,8 @@ package goovn
 import (
 	"fmt"
 	"reflect"
+
+	"github.com/ebay/libovsdb"
 )
 
 // GetByID is a generic Get function capable of returning (through a provided pointer)
@@ -119,6 +121,53 @@ func (odbi *ovndb) List(result interface{}) error {
 		i++
 	}
 	return nil
+}
+
+// Create is a generic function capable of creating any row in the DB
+// It only works on ORM mode.
+// A valud Model (pointer to object) must be provided.
+func (odbi *ovndb) Create(model Model) (*OvnCommand, error) {
+	var uuid string
+	var err error
+
+	if odbi.mode != ORM {
+		return nil, fmt.Errorf("Create() is only available in ORM mode")
+	}
+
+	table := odbi.findTable(reflect.ValueOf(model).Type())
+	if table == "" {
+		return nil, ErrorSchema
+	}
+
+	if muuid := odbi.getUUID(model); muuid != "" {
+		uuid = muuid
+	} else {
+		uuid, err = newRowUUID()
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	// Check if exists already
+	_, err = odbi.ormFindInCache(table, model)
+	if _, err = odbi.ormFindInCache(table, model); err != ErrorNotFound {
+		return nil, ErrorExist
+	}
+
+	row, err := odbi.client.ORM(odbi.db).NewRow(string(table), model)
+	if err != nil {
+		return nil, err
+	}
+	insertOp := libovsdb.Operation{
+		Op:       opInsert,
+		Table:    string(table),
+		Row:      row,
+		UUIDName: uuid,
+	}
+
+	return &OvnCommand{Operations: []libovsdb.Operation{insertOp},
+		Exe:     odbi,
+		Results: make([][]map[string]interface{}, 1)}, nil
 }
 func (odbi *ovndb) findTable(mType reflect.Type) TableName {
 	for table, tType := range odbi.dbModel.types {
