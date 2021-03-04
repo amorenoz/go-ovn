@@ -1,8 +1,52 @@
 package goovn
 
 import (
+	"fmt"
 	"reflect"
 )
+
+// GetByID is a generic Get function capable of returning (through a provided pointer)
+// a instance of any row in the cache. It only works on ORM mode.
+// 'result' must be a pointer to an Model that exists in the DBModel
+// The main difference with Get() is that this function is O(1), while Get() is O(n)
+func (odbi *ovndb) GetByID(result interface{}, uuid string) error {
+	if odbi.mode != ORM {
+		return fmt.Errorf("GetByID() is only available in ORM mode")
+	}
+
+	resultVal := reflect.ValueOf(result)
+	if resultVal.Type().Kind() != reflect.Ptr {
+		return fmt.Errorf("GetByID() result must be a pointer")
+	}
+
+	table := odbi.findTable(resultVal.Type())
+	if table == "" {
+		return ErrorSchema
+	}
+
+	odbi.cachemutex.RLock()
+	defer odbi.cachemutex.RUnlock()
+	tableCache, ok := odbi.ormCache[table]
+	if !ok {
+		return ErrorNotFound
+	}
+
+	elem, ok := tableCache[uuid]
+	if !ok {
+		return ErrorNotFound
+	}
+
+	resultVal.Elem().Set(reflect.Indirect(reflect.ValueOf(elem)))
+	return nil
+}
+func (odbi *ovndb) findTable(mType reflect.Type) TableName {
+	for table, tType := range odbi.dbModel.types {
+		if tType == mType {
+			return table
+		}
+	}
+	return ""
+}
 
 func (odbi *ovndb) setUUID(model Model, uuid string) {
 	uField := reflect.Indirect(reflect.ValueOf(model)).FieldByName("UUID")
