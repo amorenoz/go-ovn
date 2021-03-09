@@ -29,6 +29,12 @@ func (db DBModel) NewModel(table TableName) (Model, error) {
 	return model.Interface().(Model), nil
 }
 
+// GetType returns the DBModel Types
+func (db DBModel) GetTypes() map[TableName]reflect.Type {
+	return db.types
+}
+
+// GetType returns the DBModel Types
 func NewDBModel(models []Model) (*DBModel, error) {
 	types := make(map[TableName]reflect.Type, len(models))
 	for _, model := range models {
