@@ -244,6 +244,11 @@ func (odbi *ovndb) UpdateFields(model Model, fields []string, index ...string) (
 	return &OvnCommand{operations, odbi, make([][]map[string]interface{}, len(operations))}, nil
 }
 
+// GetSchema returns the DB schema
+func (odbi *ovndb) GetSchema() *libovsdb.DatabaseSchema {
+	return odbi.client.Schema[odbi.db]
+}
+
 func (odbi *ovndb) findTable(mType reflect.Type) TableName {
 	for table, tType := range odbi.dbModel.types {
 		if tType == mType {

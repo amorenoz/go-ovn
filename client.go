@@ -255,6 +255,9 @@ type ORMClient interface {
 
 	Execute(cmds ...*OvnCommand) error
 
+	// GetSchema returns the OVN schema
+	GetSchema() *libovsdb.DatabaseSchema
+
 	// Close connection to OVN
 	Close() error
 }
